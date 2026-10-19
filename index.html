@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Emisi & Kawasan Hutan · WebGIS Jawa Timur</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div id="app">
+    <div id="map"></div>
+
+    <!-- PANEL -->
+    <aside id="panel">
+      <header class="panel-head">
+        <p class="eyebrow">WebGIS · Jawa Timur · 2025</p>
+        <h1>Emisi &amp; <span>Kawasan Hutan</span></h1>
+      </header>
+
+      <section class="modes">
+        <p class="section-title">Mode Emisi</p>
+        <div id="modeList" class="mode-list"></div>
+      </section>
+
+      <section class="stats">
+        <div class="stat stat-main">
+          <span class="stat-label" id="kpiTotalLabel">Total Emisi</span>
+          <span class="stat-value" id="kpiTotal">…</span>
+          <span class="stat-unit" id="kpiUnit">t CO₂e</span>
+        </div>
+        <div class="stat-row">
+          <div class="stat">
+            <span class="stat-label" id="kpiAltLabel">Kab./Kota Berdata</span>
+            <span class="stat-value sm" id="kpiCells">…</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label" id="kpiMaxLabel">Wilayah Tertinggi</span>
+            <span class="stat-value sm" id="kpiMax">…</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="sektor">
+        <p class="section-title">Pilih Sektor</p>
+        <ul id="sektorList" class="sektor-list"></ul>
+      </section>
+
+      <section class="toc">
+        <p class="section-title">Kawasan Hutan <span class="muted" id="hutanTotalLuas"></span></p>
+        <div id="hutanList" class="toc-list"></div>
+        <p class="legend-note">Sumber: ESDM Geoportal · Kawasan Hutan (kode_prov 35, Jawa Timur).</p>
+      </section>
+
+      <section class="ranking">
+        <p class="section-title">Peringkat Kabupaten/Kota <span class="muted" id="rankSektor"></span></p>
+        <div class="rank-table-wrap">
+          <table class="rank-table" id="rankTable">
+            <thead>
+              <tr><th>#</th><th>Kabupaten</th><th>Scope 1</th><th>Scope 2</th><th>Total</th></tr>
+            </thead>
+            <tbody id="rankBody"></tbody>
+          </table>
+        </div>
+        <p class="legend-note">Klik baris atau wilayah di peta → lihat rincian emisi &amp; kawasan hutan.</p>
+      </section>
+
+      <section class="legend">
+        <p class="section-title">Skala <span class="muted" id="legendMode">Total (S1+S2)</span></p>
+        <div class="legend-bar" id="legendBar"></div>
+        <div class="legend-scale">
+          <span id="legMin">…</span>
+          <span id="legMax">…</span>
+        </div>
+      </section>
+
+      <footer class="panel-foot">
+        <span class="muted">NEXUS · EDGAR · ESDM Geoportal (Kawasan Hutan) · 2025</span>
+      </footer>
+    </aside>
+
+    <div id="basemaps" class="basemaps">
+      <button data-base="osm" class="active">OpenStreetMap</button>
+      <button data-base="sat">Satelit</button>
+    </div>
+
+    <div id="readout" class="readout" hidden></div>
+    <div id="loader" class="loader">Memuat data…</div>
+
+    <button id="panelToggle" class="panel-toggle" aria-label="Tampilkan/sembunyikan panel">☰</button>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/georaster@1.6.0/dist/georaster.browser.bundle.min.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
