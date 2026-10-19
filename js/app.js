@@ -33,6 +33,7 @@
   var GEOJSON_URL = "data/kabupaten_jatim.geojson";
   var HUTAN_URL = "data/hutan_jatim.geojson";
   var HUTAN_STATS_URL = "data/hutan_stats_kabupaten.json";
+  var GFW_STATS_URL = "data/hutan_gfw_2020_2024.json";
 
   // jenis kawasan hutan (deskripsi) -> warna
   var HUTAN_TYPES = [
@@ -99,6 +100,7 @@
   var HUTAN_GEO = null;           // FeatureCollection kawasan hutan (dissolve per jenis)
   var HUTAN_STATS = {};           // fid(string) -> {nama, luas_kab_ha, hutan:[...], luas_hutan_total_ha, persen_hutan_total}
   var hutanLayers = {};           // deskripsi -> L.geoJSON
+  var GFW_STATS = null;           // { meta, tahun, provinsi, kabupaten: {fid: {...}} } -- Global Forest Watch (Hansen GFC), 2020-2024, dipakai di popup saja (bukan layer peta, biar ringan)
 
   // ---------------- MUAT 1 GEOTIFF ----------------
   function loadTif(url) {
@@ -256,19 +258,50 @@
     });
   }
 
+  // ---------------- KAWASAN HUTAN GFW (Hansen/UMD, 2020-2024) ----------------
+  // Dipakai di popup kabupaten saja (statistik dari JSON) -- tidak ada layer
+  // peta/GeoJSON terpisah karena berat.
+  function loadGfw() {
+    return fetch(GFW_STATS_URL)
+      .then(function (r) { if (!r.ok) throw new Error(r.status + " " + GFW_STATS_URL); return r.json(); })
+      .then(function (d) { GFW_STATS = d; })
+      .catch(function (e) { console.warn("gagal muat data GFW", e.message); GFW_STATS = null; });
+  }
+
   // ---------------- POPUP KABUPATEN: emisi + kawasan hutan ----------------
   function hutanBreakdownHtml(fid) {
     var st = HUTAN_STATS[String(fid)];
     if (!st || !st.hutan || !st.hutan.length) {
-      return '<div class="popup-sub"><div class="popup-eyebrow">Kawasan Hutan</div><p class="popup-empty">Tidak ada data kawasan hutan di wilayah ini.</p></div>';
+      return '<div class="popup-sub"><div class="popup-eyebrow">Kawasan Hutan (ESDM · 2020)</div><p class="popup-empty">Tidak ada data kawasan hutan di wilayah ini.</p></div>';
     }
     var rows = st.hutan.map(function (h) {
       return '<tr><td><span class="hutan-dot" style="background:' + hutanColor(h.deskripsi) + '"></span>' + h.deskripsi + '</td>' +
              '<td>' + fha(h.luas_ha) + '</td><td>' + fpct(h.persen) + '</td></tr>';
     }).join("");
     return '<div class="popup-sub">' +
-           '<div class="popup-eyebrow">Kawasan Hutan · ' + fpct(st.persen_hutan_total) + ' dari luas wilayah</div>' +
+           '<div class="popup-eyebrow">Kawasan Hutan (ESDM · 2020) · ' + fpct(st.persen_hutan_total) + ' dari luas wilayah</div>' +
            '<table class="popup-hutan-tab">' + rows + '</table>' +
+           '</div>';
+  }
+
+  function gfwBreakdownHtml(fid) {
+    if (!GFW_STATS) return "";
+    var st = GFW_STATS.kabupaten[String(fid)];
+    if (!st) return "";
+    var tahunList = GFW_STATS.tahun || [2020, 2021, 2022, 2023, 2024];
+    var rows = tahunList.map(function (t) {
+      var y = String(t);
+      var tutupan = st.tutupan_tersisa_per_tahun_ha[y] || 0;
+      var loss = st.loss_per_tahun_ha[y] || 0;
+      return '<tr><td>' + t + '</td><td>' + fha(tutupan) + '</td><td>' + fha(loss) + '</td></tr>';
+    }).join("");
+    return '<div class="popup-sub">' +
+           '<div class="popup-eyebrow">Tutupan Hutan (Global Forest Watch)</div>' +
+           '<table class="popup-hutan-tab">' +
+             '<tr><th>Tahun</th><th>Tutupan tersisa</th><th>Loss</th></tr>' +
+             rows +
+           '</table>' +
+           '<p class="popup-empty">Gain (periode statis 2000-2012): ' + fha(st.gain_ha) + '</p>' +
            '</div>';
   }
 
@@ -283,7 +316,8 @@
         '<tr><td>Emisi Scope 2</td><td>' + fval(k.s2) + ' t</td></tr>' +
         '<tr><td>Total (S1+S2)</td><td>' + fval(k.emisi) + ' t</td></tr>' +
       '</table>' +
-      hutanBreakdownHtml(k.fid)
+      hutanBreakdownHtml(k.fid) +
+      gfwBreakdownHtml(k.fid)
     ).openOn(map);
   }
 
@@ -436,7 +470,7 @@
 
   // ---------------- BOOT ----------------
   loadGeo()
-    .then(function () { return Promise.all([Promise.all(SEKTOR.map(muat)), loadHutan()]); })
+    .then(function () { return Promise.all([Promise.all(SEKTOR.map(muat)), loadHutan(), loadGfw()]); })
     .then(function () {
       loader.classList.add("hidden");
       buildModes(); buildList(); buildHutanToc(); select(activeKey);
